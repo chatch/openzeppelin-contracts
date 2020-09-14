@@ -16,7 +16,13 @@ import "../../utils/Strings.sol";
  * @title ERC721 Non-Fungible Token Standard basic implementation
  * @dev see https://eips.ethereum.org/EIPS/eip-721
  */
-contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable {
+contract ERC721 is 
+    Context,
+    ERC165,
+    IERC721,
+    IERC721Metadata
+    // IERC721Enumerable 
+{
     using SafeMath for uint256;
     using Address for address;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -27,11 +33,17 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
     // which can be also obtained as `IERC721Receiver(0).onERC721Received.selector`
     bytes4 private constant _ERC721_RECEIVED = 0x150b7a02;
 
+    // Mapping from tokenId to owner
+    mapping (uint256 => address) public _idToOwner;
+
+    // Token counts for balanceOf
+    mapping (address => uint256) private _ownedTokensCount;
+
     // Mapping from holder address to their (enumerable) set of owned tokens
-    mapping (address => EnumerableSet.UintSet) private _holderTokens;
+    // mapping (address => EnumerableSet.UintSet) private _holderTokens;
 
     // Enumerable mapping from token ids to their owners
-    EnumerableMap.UintToAddressMap private _tokenOwners;
+    // EnumerableMap.UintToAddressMap private _tokenOwners;
 
     // Mapping from token ID to approved address
     mapping (uint256 => address) private _tokenApprovals;
@@ -102,8 +114,8 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
      */
     function balanceOf(address owner) public view override returns (uint256) {
         require(owner != address(0), "ERC721: balance query for the zero address");
-
-        return _holderTokens[owner].length();
+        return _ownedTokensCount[owner];
+        // return _holderTokens[owner].length();
     }
 
     /**
@@ -112,7 +124,8 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
      * @return address currently marked as the owner of the given token ID
      */
     function ownerOf(uint256 tokenId) public view override returns (address) {
-        return _tokenOwners.get(tokenId, "ERC721: owner query for nonexistent token");
+        return _idToOwner[tokenId];
+        // return _tokenOwners.get(tokenId, "ERC721: owner query for nonexistent token");
     }
 
     /**
@@ -194,18 +207,18 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
      * @param index uint256 representing the index to be accessed of the requested tokens list
      * @return uint256 token ID at the given index of the tokens list owned by the requested address
      */
-    function tokenOfOwnerByIndex(address owner, uint256 index) public view override returns (uint256) {
-        return _holderTokens[owner].at(index);
-    }
+    // function tokenOfOwnerByIndex(address owner, uint256 index) public view override returns (uint256) {
+    //     return _holderTokens[owner].at(index);
+    // }
 
     /**
      * @dev Gets the total amount of tokens stored by the contract.
      * @return uint256 representing the total amount of tokens
      */
-    function totalSupply() public view override returns (uint256) {
-        // _tokenOwners are indexed by tokenIds, so .length() returns the number of tokenIds
-        return _tokenOwners.length();
-    }
+    // function totalSupply() public view override returns (uint256) {
+    //     // _tokenOwners are indexed by tokenIds, so .length() returns the number of tokenIds
+    //     return _tokenOwners.length();
+    // }
 
     /**
      * @dev Gets the token ID at a given index of all the tokens in this contract
@@ -213,10 +226,10 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
      * @param index uint256 representing the index to be accessed of the tokens list
      * @return uint256 token ID at the given index of the tokens list
      */
-    function tokenByIndex(uint256 index) public view override returns (uint256) {
-        (uint256 tokenId, ) = _tokenOwners.at(index);
-        return tokenId;
-    }
+    // function tokenByIndex(uint256 index) public view override returns (uint256) {
+    //     (uint256 tokenId, ) = _tokenOwners.at(index);
+    //     return tokenId;
+    // }
 
     /**
      * @dev Approves another address to transfer the given token ID
@@ -342,7 +355,8 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
      * @return bool whether the token exists
      */
     function _exists(uint256 tokenId) internal view returns (bool) {
-        return _tokenOwners.contains(tokenId);
+        return _idToOwner[tokenId] != address(0);
+        // return _tokenOwners.contains(tokenId);
     }
 
     /**
@@ -400,9 +414,12 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
 
         _beforeTokenTransfer(address(0), to, tokenId);
 
-        _holderTokens[to].add(tokenId);
+        _idToOwner[tokenId] = to;
+        // SHOULD BE SAFEMATH!:
+        _ownedTokensCount[to]++;
+        // _holderTokens[to].add(tokenId);
 
-        _tokenOwners.set(tokenId, to);
+        // _tokenOwners.set(tokenId, to);
 
         emit Transfer(address(0), to, tokenId);
     }
@@ -425,9 +442,13 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
             delete _tokenURIs[tokenId];
         }
 
-        _holderTokens[owner].remove(tokenId);
+        // SHOULD BE SAFEMATH!:
+        _ownedTokensCount[owner]--;
+        _idToOwner[tokenId] = address(0);
+        
+        // _holderTokens[owner].remove(tokenId);
 
-        _tokenOwners.remove(tokenId);
+        // _tokenOwners.remove(tokenId);
 
         emit Transfer(owner, address(0), tokenId);
     }
@@ -448,10 +469,15 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Enumerable 
         // Clear approvals from the previous owner
         _approve(address(0), tokenId);
 
-        _holderTokens[from].remove(tokenId);
-        _holderTokens[to].add(tokenId);
+        // SHOULD BE SAFEMATH!:
+        _ownedTokensCount[from]--;
+        _ownedTokensCount[to]++;
 
-        _tokenOwners.set(tokenId, to);
+        _idToOwner[tokenId] = to;
+        // _holderTokens[from].remove(tokenId);
+        // _holderTokens[to].add(tokenId);
+
+        // _tokenOwners.set(tokenId, to);
 
         emit Transfer(from, to, tokenId);
     }
