@@ -113,14 +113,17 @@ describe('ERC721', function () {
 
   context('with minted tokens', function () {
     beforeEach(async function () {
-      await this.token.mint(owner, firstTokenId);
-      await this.token.mint(owner, secondTokenId);
+      let tx
+      tx = await this.token.mint(owner, firstTokenId);
+      console.log(tx.receipt.gasUsed)
+      tx = await this.token.mint(owner, secondTokenId);
+      console.log(tx.receipt.gasUsed)
       this.toWhom = other; // default to other for toWhom in context-dependent tests
     });
 
     describe('balanceOf', function () {
       context('when the given address owns some tokens', function () {
-        it('returns the amount of tokens owned by the given address', async function () {
+        it.only('returns the amount of tokens owned by the given address', async function () {
           expect(await this.token.balanceOf(owner)).to.be.bignumber.equal('2');
         });
       });
@@ -739,7 +742,7 @@ describe('ERC721', function () {
             [0, 1].map(i => this.token.tokenOfOwnerByIndex(other, i))
           );
           expect(tokensListed.map(t => t.toNumber())).to.have.members([firstTokenId.toNumber(),
-            secondTokenId.toNumber()]);
+          secondTokenId.toNumber()]);
         });
 
         it('returns empty collection for original owner', async function () {
@@ -757,7 +760,7 @@ describe('ERC721', function () {
           [0, 1].map(i => this.token.tokenByIndex(i))
         );
         expect(tokensListed.map(t => t.toNumber())).to.have.members([firstTokenId.toNumber(),
-          secondTokenId.toNumber()]);
+        secondTokenId.toNumber()]);
       });
 
       it('should revert if index is greater than supply', async function () {

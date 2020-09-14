@@ -5,13 +5,13 @@ const { expect } = require('chai');
 const EnumerableSetMock = contract.fromArtifact('EnumerableSetMock');
 
 describe('EnumerableSet', function () {
-  const [ accountA, accountB, accountC ] = accounts;
+  const [accountA, accountB, accountC] = accounts;
 
   beforeEach(async function () {
     this.set = await EnumerableSetMock.new();
   });
 
-  async function expectMembersMatch (set, values) {
+  async function expectMembersMatch(set, values) {
     await Promise.all(values.map(async account =>
       expect(await set.contains(account)).to.equal(true)
     ));
@@ -36,9 +36,13 @@ describe('EnumerableSet', function () {
     await expectMembersMatch(this.set, [accountA]);
   });
 
-  it('adds several values', async function () {
-    await this.set.add(accountA);
-    await this.set.add(accountB);
+  it.only('adds several values', async function () {
+    let tx
+
+    tx = await this.set.add(accountA);
+    console.log(tx.receipt.gasUsed)
+    tx = await this.set.add(accountB);
+    console.log(tx.receipt.gasUsed)
 
     await expectMembersMatch(this.set, [accountA, accountB]);
     expect(await this.set.contains(accountC)).to.equal(false);

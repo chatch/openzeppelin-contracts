@@ -7,7 +7,7 @@ const zip = require('lodash.zip');
 const EnumerableMapMock = contract.fromArtifact('EnumerableMapMock');
 
 describe('EnumerableMap', function () {
-  const [ accountA, accountB, accountC ] = accounts;
+  const [accountA, accountB, accountC] = accounts;
 
   const keyA = new BN('7891');
   const keyB = new BN('451');
@@ -17,7 +17,7 @@ describe('EnumerableMap', function () {
     this.map = await EnumerableMapMock.new();
   });
 
-  async function expectMembersMatch (map, keys, values) {
+  async function expectMembersMatch(map, keys, values) {
     expect(keys.length).to.equal(values.length);
 
     await Promise.all(keys.map(async key =>
@@ -53,9 +53,12 @@ describe('EnumerableMap', function () {
     await expectMembersMatch(this.map, [keyA], [accountA]);
   });
 
-  it('adds several keys', async function () {
-    await this.map.set(keyA, accountA);
-    await this.map.set(keyB, accountB);
+  it.only('adds several keys', async function () {
+    let tx
+    tx = await this.map.set(keyA, accountA);
+    console.log(tx.receipt.gasUsed)
+    tx = await this.map.set(keyB, accountB);
+    console.log(tx.receipt.gasUsed)
 
     await expectMembersMatch(this.map, [keyA, keyB], [accountA, accountB]);
     expect(await this.map.contains(keyC)).to.equal(false);
